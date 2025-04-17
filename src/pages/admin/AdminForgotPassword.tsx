@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const AdminForgotPassword = () => {
   const [step, setStep] = useState<'email' | 'code' | 'password'>('email');
-  const [email, setEmail] = useState("salapa2179@insfou.com");
+  const [email, setEmail] = useState("i.am.visertech@gmail.com");
   const [verificationCode, setVerificationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
