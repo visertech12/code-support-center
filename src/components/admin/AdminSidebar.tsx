@@ -4,11 +4,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 
 interface AdminSidebarProps {
-  show: boolean;
-  setShow: (show: boolean) => void;
+  show?: boolean;
+  setShow?: (show: boolean) => void;
 }
 
-const AdminSidebar = ({ show, setShow }: AdminSidebarProps) => {
+const AdminSidebar = ({ show = true, setShow = () => {} }: AdminSidebarProps) => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 

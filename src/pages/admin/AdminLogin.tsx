@@ -28,18 +28,18 @@ const AdminLogin = () => {
   useEffect(() => {
     const checkAdminSetup = async () => {
       try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'admin_setup')
-          .single();
+        // Check if any admin users exist
+        const { count, error } = await supabase
+          .from('admin_users')
+          .select('*', { count: 'exact', head: true });
 
         if (error) {
           console.error('Error checking admin setup:', error);
           return;
         }
 
-        setIsFirstTimeSetup(!data?.value?.is_completed);
+        // If no admin users exist, show first time setup
+        setIsFirstTimeSetup(count === 0);
         setSetupChecked(true);
       } catch (error) {
         console.error('Error checking admin setup:', error);
@@ -101,16 +101,6 @@ const AdminLogin = () => {
 
       if (adminError) {
         throw adminError;
-      }
-      
-      // Update admin setup status
-      const { error: settingsError } = await supabase
-        .from('app_settings')
-        .update({ value: { is_completed: true } })
-        .eq('key', 'admin_setup');
-        
-      if (settingsError) {
-        throw settingsError;
       }
       
       toast({

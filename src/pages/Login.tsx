@@ -24,16 +24,15 @@ const Login = () => {
   useEffect(() => {
     const checkAdminSetup = async () => {
       try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'admin_setup')
-          .single();
+        // Check if any admin users exist
+        const { count, error } = await supabase
+          .from('admin_users')
+          .select('*', { count: 'exact', head: true });
 
         if (error) {
           console.error('Error checking admin setup:', error);
-        } else if (data && !data.value.is_completed) {
-          // If admin setup is not completed, navigate to admin setup
+        } else if (count === 0) {
+          // If no admin users, redirect to admin setup
           navigate('/admin/login');
         }
       } catch (error) {

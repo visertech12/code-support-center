@@ -19,6 +19,7 @@ const AdminDashboard = () => {
     totalTransactions: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   useEffect(() => {
     const checkAdmin = async () => {
@@ -122,7 +123,7 @@ const AdminDashboard = () => {
   
   return (
     <div className="flex h-screen bg-gray-100">
-      <AdminSidebar />
+      <AdminSidebar show={sidebarOpen} setShow={setSidebarOpen} />
       
       <div className="flex-1 overflow-y-auto">
         <AdminHeader title="Dashboard" />

@@ -33,6 +33,7 @@ const UsersManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   useEffect(() => {
     const checkAdmin = async () => {
@@ -122,7 +123,7 @@ const UsersManagement = () => {
   
   return (
     <div className="flex h-screen bg-gray-100">
-      <AdminSidebar />
+      <AdminSidebar show={sidebarOpen} setShow={setSidebarOpen} />
       
       <div className="flex-1 overflow-y-auto">
         <AdminHeader title="User Management" />
