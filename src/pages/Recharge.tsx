@@ -3,15 +3,19 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { supabase, uploadScreenshot } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Loader2 } from "lucide-react";
 
-interface Package {
-  id: string;
+interface Stock {
+  id: number;
   name: string;
   price: number;
+  image: string;
+  dailyProfit: number;
+  totalProfit: number;
+  validity: number;
 }
 
 interface PaymentMethod {
@@ -22,12 +26,61 @@ interface PaymentMethod {
   exchange_rate?: number;
 }
 
+// Stock data (to be replaced with database when API is ready)
+const stocks: Stock[] = [
+  {
+    id: 1,
+    name: "TSLA",
+    price: 50,
+    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca7f1bc64751707769627.png",
+    dailyProfit: 5,
+    totalProfit: 75,
+    validity: 15
+  },
+  {
+    id: 2,
+    name: "NVIDIA",
+    price: 100,
+    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca7f71caba51707769713.png",
+    dailyProfit: 10,
+    totalProfit: 150,
+    validity: 15
+  },
+  {
+    id: 3,
+    name: "META",
+    price: 200,
+    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca7fc9efb401707769801.png",
+    dailyProfit: 20,
+    totalProfit: 300,
+    validity: 15
+  },
+  {
+    id: 4,
+    name: "AMD",
+    price: 300,
+    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca80235fb711707769891.jpg",
+    dailyProfit: 30,
+    totalProfit: 450,
+    validity: 15
+  },
+  {
+    id: 5,
+    name: "AMZN",
+    price: 400,
+    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca81545efd51707770196.jpg",
+    dailyProfit: 40,
+    totalProfit: 600,
+    validity: 15
+  }
+];
+
 const Recharge = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
-  const [amount, setAmount] = useState<number>(50);
+  const [amount, setAmount] = useState<number>(0);
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [transactionId, setTransactionId] = useState<string>("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -36,41 +89,30 @@ const Recharge = () => {
     { id: "1001", name: "Nagad", payment_number: "018xxxxxx77" },
     { id: "1002", name: "USDT", payment_number: "TC8xxxxx9F", currency: "USDT", exchange_rate: 100 }
   ]);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Get package details if id is provided
+  // Get stock details if id is provided
   useEffect(() => {
-    const fetchPackageDetails = async () => {
-      if (id) {
-        try {
-          const { data, error } = await supabase
-            .from('packages')
-            .select('id, name, price')
-            .eq('id', id)
-            .single();
-
-          if (error) {
-            throw error;
-          }
-
-          if (data) {
-            setSelectedPackage(data);
-            setAmount(data.price);
-          }
-        } catch (error) {
-          console.error('Error fetching package details:', error);
-          toast({
-            title: "Error",
-            description: "Could not fetch package details",
-            variant: "destructive",
-          });
-        }
+    if (id) {
+      const stockId = parseInt(id);
+      const stock = stocks.find(s => s.id === stockId);
+      if (stock) {
+        setSelectedStock(stock);
+        setAmount(stock.price);
+      } else {
+        toast({
+          title: "Error",
+          description: "Stock not found",
+          variant: "destructive",
+        });
+        navigate('/package');
       }
-    };
-
-    fetchPackageDetails();
-  }, [id]);
+    } else {
+      // Default amount for general recharge
+      setAmount(50);
+    }
+  }, [id, navigate]);
 
   const handleBack = () => {
     navigate(-1);
@@ -95,12 +137,13 @@ const Recharge = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !profile) {
+    if (!user) {
       toast({
         title: "Error",
         description: "You must be logged in to make a deposit",
         variant: "destructive",
       });
+      navigate('/');
       return;
     }
 
@@ -128,7 +171,30 @@ const Recharge = () => {
       // Upload screenshot if available
       let screenshotUrl = null;
       if (screenshot) {
-        screenshotUrl = await uploadScreenshot(screenshot, user.id);
+        try {
+          const fileExt = screenshot.name.split('.').pop();
+          const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+          const filePath = `${user.id}/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('screenshots')
+            .upload(filePath, screenshot);
+            
+          if (uploadError) {
+            throw uploadError;
+          }
+          
+          const { data: publicUrlData } = supabase.storage
+            .from('screenshots')
+            .getPublicUrl(filePath);
+            
+          if (publicUrlData) {
+            screenshotUrl = publicUrlData.publicUrl;
+          }
+        } catch (uploadError) {
+          console.error('Error uploading screenshot:', uploadError);
+          // Continue without screenshot if upload fails
+        }
       }
 
       // Create deposit record
@@ -141,7 +207,7 @@ const Recharge = () => {
             payment_method: paymentMethods.find(m => m.id === selectedMethod)?.name || selectedMethod,
             transaction_id: transactionId,
             screenshot_url: screenshotUrl,
-            package_id: selectedPackage?.id || null,
+            package_id: selectedStock ? String(selectedStock.id) : null,
             status: 'pending'
           }
         ]);
@@ -159,7 +225,7 @@ const Recharge = () => {
             amount: amount,
             type: 'deposit',
             status: 'pending',
-            description: `Deposit of $${amount} (${selectedPackage ? `for package: ${selectedPackage.name}` : 'account recharge'})`
+            description: `Deposit of $${amount} ${selectedStock ? `for stock: ${selectedStock.name}` : '(account recharge)'}`
           }
         ]);
 
@@ -195,7 +261,7 @@ const Recharge = () => {
     if (method && method.exchange_rate) {
       return (amount * method.exchange_rate).toFixed(2);
     }
-    return (amount * 100).toFixed(2);
+    return (amount * 100).toFixed(2); // Default exchange rate
   };
 
   return (
@@ -224,7 +290,7 @@ const Recharge = () => {
                 />
               </div>
               <h1 className="text-white text-[16px]">
-                {selectedPackage ? `Top-up for ${selectedPackage.name}` : "Recharge Account"}
+                {selectedStock ? `Top-up for ${selectedStock.name}` : "Recharge Account"}
               </h1>
             </div>
             <div className="bg-gradient-to-b from-gray-200 to-orange-200 h-[40px] w-[40px] rounded-full p-[2px]">
@@ -268,11 +334,12 @@ const Recharge = () => {
                 </div>
                 <input
                   type="number"
+                  id="amount"
                   value={amount}
-                  onChange={(e) => !selectedPackage && setAmount(Number(e.target.value))}
-                  className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0 border-2 border-amber-500 focus:outline-2 font-bold text-orange-500 focus:outline-amber-600 bg-white/50"
+                  onChange={(e) => !selectedStock && setAmount(Number(e.target.value))}
+                  className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0 border-amber-500 focus:outline-2 font-bold text-orange-500 focus:outline-amber-600 bg-white/50"
                   placeholder="Enter Amount to Deposit"
-                  readOnly={!!selectedPackage}
+                  readOnly={!!selectedStock}
                 />
               </div>
             </div>
@@ -288,9 +355,10 @@ const Recharge = () => {
                 </label>
                 <div className="relative mb-2">
                   <select
+                    id="payment_method"
                     value={selectedMethod}
                     onChange={handleMethodChange}
-                    className="bg-white/50 text-orange-500 text-sm rounded-lg w-full undefined p-[12px] border-2 border-orange-600 focus:!outline-0 focus:outline-transparent border-2 border-amber-500 focus:outline-2 focus:outline-amber-600 bg-white/50"
+                    className="bg-white/50 text-orange-500 text-sm rounded-lg w-full p-[12px] border-2 border-orange-600 focus:!outline-0 focus:outline-transparent border-amber-500 focus:outline-2 focus:outline-amber-600 bg-white/50"
                   >
                     <option value="">Select Deposit Method</option>
                     {paymentMethods.map((method) => (
@@ -368,9 +436,10 @@ const Recharge = () => {
                     </div>
                     <input
                       type="text"
+                      id="transaction_id"
                       value={transactionId}
                       onChange={(e) => setTransactionId(e.target.value)}
-                      className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0 undefined"
+                      className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0"
                       placeholder="Enter your Payment Transaction ID"
                     />
                   </div>
@@ -385,6 +454,7 @@ const Recharge = () => {
                   </label>
                   <input
                     className="block w-full bg-transparent text-sm text-orange-500 border-2 border-orange-500 rounded-lg cursor-pointer bg-orange-50 py-[5px]"
+                    id="screenshot"
                     name="screenshot"
                     type="file"
                     accept="image/*"
