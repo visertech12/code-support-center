@@ -1,392 +1,422 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { supabase, uploadScreenshot } from "@/lib/supabaseClient";
+import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/BottomNavigation";
+import { Loader2 } from "lucide-react";
 
 interface Package {
   id: string;
   name: string;
   price: number;
-  description: string;
+}
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  payment_number?: string;
+  currency?: string;
+  exchange_rate?: number;
 }
 
 const Recharge = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { id } = useParams();
-  const [isLoading, setIsLoading] = useState(true);
-  const [uploadingFile, setUploadingFile] = useState(false);
+  const { user, profile } = useAuth();
+
+  const [amount, setAmount] = useState<number>(50);
+  const [selectedMethod, setSelectedMethod] = useState<string>("");
+  const [transactionId, setTransactionId] = useState<string>("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
+    { id: "1000", name: "bKash", payment_number: "017xxxxxx66" },
+    { id: "1001", name: "Nagad", payment_number: "018xxxxxx77" },
+    { id: "1002", name: "USDT", payment_number: "TC8xxxxx9F", currency: "USDT", exchange_rate: 100 }
+  ]);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [currentBalance, setCurrentBalance] = useState(0);
-  const [formData, setFormData] = useState({
-    amount: 50,
-    paymentMethod: "",
-    transactionId: "",
-  });
-  const [paymentInfo, setPaymentInfo] = useState({
-    accountNumber: "017xxxxxx66",
-    rate: 100,
-  });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Get package details if id is provided
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/");
-        return;
-      }
-      
-      // Fetch package details if ID is provided
+    const fetchPackageDetails = async () => {
       if (id) {
-        const { data: packageData, error: packageError } = await supabase
-          .from('packages')
-          .select('*')
-          .eq('id', id)
-          .single();
-          
-        if (!packageError && packageData) {
-          setSelectedPackage(packageData);
-          setFormData(prev => ({ ...prev, amount: packageData.price }));
+        try {
+          const { data, error } = await supabase
+            .from('packages')
+            .select('id, name, price')
+            .eq('id', id)
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          if (data) {
+            setSelectedPackage(data);
+            setAmount(data.price);
+          }
+        } catch (error) {
+          console.error('Error fetching package details:', error);
+          toast({
+            title: "Error",
+            description: "Could not fetch package details",
+            variant: "destructive",
+          });
         }
       }
-      
-      // Fetch user's current balance
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', session.user.id)
-        .single();
-        
-      if (!userError && userData) {
-        setCurrentBalance(userData.balance || 0);
-      }
-      
-      setIsLoading(false);
     };
-    
-    checkAuth();
-  }, [navigate, id]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    fetchPackageDetails();
+  }, [id]);
+
+  const handleBack = () => {
+    navigate(-1);
   };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+
+  const handleMethodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMethod(e.target.value);
+  };
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setScreenshot(e.target.files[0]);
     }
   };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: "Payment number copied to clipboard",
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!user || !profile) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to make a deposit",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedMethod) {
+      toast({
+        title: "Error",
+        description: "Please select a payment method",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!transactionId) {
+      toast({
+        title: "Error",
+        description: "Please enter the transaction ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      // Validation
-      if (!formData.paymentMethod) {
-        toast({
-          title: "Error",
-          description: "Please select a payment method",
-          variant: "destructive",
-        });
-        return;
+      // Upload screenshot if available
+      let screenshotUrl = null;
+      if (screenshot) {
+        screenshotUrl = await uploadScreenshot(screenshot, user.id);
       }
-      
-      if (!formData.transactionId) {
-        toast({
-          title: "Error",
-          description: "Transaction ID is required",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (!selectedFile) {
-        toast({
-          title: "Error",
-          description: "Payment screenshot is required",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/");
-        return;
-      }
-      
-      setUploadingFile(true);
-      
-      // Upload screenshot
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
-      
-      // Check if the payment-screenshots bucket exists, if not create it
-      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('payment-screenshots');
-      
-      if (bucketError && bucketError.message.includes('does not exist')) {
-        await supabase.storage.createBucket('payment-screenshots', { public: true });
-      }
-      
-      const { data: fileData, error: fileError } = await supabase.storage
-        .from('payment-screenshots')
-        .upload(fileName, selectedFile);
-        
-      if (fileError) {
-        throw fileError;
-      }
-      
-      // Get public URL for the uploaded file
-      const { data: publicUrlData } = supabase.storage
-        .from('payment-screenshots')
-        .getPublicUrl(fileName);
-        
-      const screenshotUrl = publicUrlData.publicUrl;
-      
+
       // Create deposit record
-      const { data: depositData, error: depositError } = await supabase
+      const { error: depositError } = await supabase
         .from('deposits')
         .insert([
           {
-            user_id: session.user.id,
-            amount: formData.amount,
-            payment_method: formData.paymentMethod,
-            transaction_id: formData.transactionId,
+            user_id: user.id,
+            amount: amount,
+            payment_method: paymentMethods.find(m => m.id === selectedMethod)?.name || selectedMethod,
+            transaction_id: transactionId,
             screenshot_url: screenshotUrl,
-            status: 'pending',
-            package_id: id || null
+            package_id: selectedPackage?.id || null,
+            status: 'pending'
           }
         ]);
-        
+
       if (depositError) {
         throw depositError;
       }
-      
+
       // Create transaction record
-      await supabase
+      const { error: transactionError } = await supabase
         .from('transactions')
         .insert([
           {
-            user_id: session.user.id,
-            amount: formData.amount,
+            user_id: user.id,
+            amount: amount,
             type: 'deposit',
             status: 'pending',
-            description: `Deposit of $${formData.amount} pending approval`
+            description: `Deposit of $${amount} (${selectedPackage ? `for package: ${selectedPackage.name}` : 'account recharge'})`
           }
         ]);
-      
+
+      if (transactionError) {
+        throw transactionError;
+      }
+
       toast({
         title: "Success",
-        description: "Your deposit request has been submitted!",
+        description: "Deposit request submitted successfully",
       });
-      
-      navigate("/dashboard");
-    } catch (error) {
+
+      // Redirect to transactions page
+      navigate('/transactions');
+    } catch (error: any) {
       console.error('Error submitting deposit:', error);
       toast({
         title: "Error",
-        description: "Failed to submit deposit request",
+        description: error.message || "Failed to submit deposit request",
         variant: "destructive",
       });
     } finally {
-      setUploadingFile(false);
+      setIsLoading(false);
     }
   };
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-orange-100">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-      </div>
-    );
-  }
-  
-  const toPay = formData.amount * paymentInfo.rate;
-  
+
+  const getSelectedMethod = () => {
+    return paymentMethods.find(method => method.id === selectedMethod);
+  };
+
+  const calculateLocalAmount = () => {
+    const method = getSelectedMethod();
+    if (method && method.exchange_rate) {
+      return (amount * method.exchange_rate).toFixed(2);
+    }
+    return (amount * 100).toFixed(2);
+  };
+
   return (
-    <div className="relative min-h-screen bg-orange-100 max-w-[480px] mx-auto overflow-hidden">
-      <div className="relative overflow-x-hidden min-h-screen">
-        <div className="absolute top-[-20px] scale-[1.3] bg-gradient-to-b from-orange-600 via-orange-400 to-orange-100 w-full h-[300px] rotate-[-10deg] blur-lg"></div>
-        <img 
-          className="absolute top-[-25px] right-[-25px] w-[30%] mix-blend-multiply rotate-[40deg] scale-[1.1] opacity-[50%]" 
-          src="https://cdn-icons-png.flaticon.com/128/2953/2953536.png" 
-          alt="" 
-        />
-        
-        <div className="relative z-[2]">
-          <div className="p-[15px]">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-3 items-center bg-black/30 backdrop-blur h-[40px] rounded-full px-[15px]">
+    <div className="relative overflow-x-hidden min-h-[100vh]">
+      {/* Background gradient */}
+      <div className="absolute top-[-20px] scale-[1.3] bg-gradient-to-b from-orange-600 via-orange-400 to-orange-100 w-full h-[300px] rotate-[-10deg] blur-lg"></div>
+      
+      {/* Decorative icon */}
+      <img
+        className="absolute top-[-25px] right-[-25px] w-[30%] mix-blend-multiply rotate-[40deg] scale-[1.1] opacity-[50%]"
+        src="https://cdn-icons-png.flaticon.com/128/2953/2953536.png"
+        alt=""
+      />
+
+      <div className="relative z-[2]">
+        <div className="p-[15px]">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-3 items-center bg-black/30 backdrop-blur h-[40px] rounded-full px-[15px]">
+              <div>
                 <img 
                   className="w-[20px] cursor-pointer" 
                   src="https://cdn-icons-png.flaticon.com/128/507/507257.png" 
-                  alt="back"
-                  onClick={() => navigate(-1)}
+                  alt=""
+                  onClick={handleBack}
                 />
-                <h1 className="text-white text-[16px]">
-                  {selectedPackage ? `Top-up for ${selectedPackage.name}` : "Deposit Funds"}
-                </h1>
               </div>
-              <div className="bg-gradient-to-b from-gray-200 to-orange-200 h-[40px] w-[40px] rounded-full p-[2px]">
+              <h1 className="text-white text-[16px]">
+                {selectedPackage ? `Top-up for ${selectedPackage.name}` : "Recharge Account"}
+              </h1>
+            </div>
+            <div className="bg-gradient-to-b from-gray-200 to-orange-200 h-[40px] w-[40px] rounded-full p-[2px]">
+              <img 
+                className="rounded-full w-full h-full" 
+                src={profile?.avatar_url || "https://img.freepik.com/premium-photo/3d-rendering-avatar-design_1258715-60685.jpg"}
+                alt="" 
+              />
+            </div>
+          </div>
+
+          <div className="mt-[50px]">
+            {/* Current balance */}
+            <div className="bg-white/50 backdrop-blur p-2 rounded-[10px]">
+              <div className="flex justify-between items-center gap-2">
+                <div>
+                  <h1 className="text-orange-500 font-semibold text-[16px]">Current Balance</h1>
+                  <h1 className="text-orange-500 font-semibold text-[26px]">
+                    ${profile?.balance?.toFixed(2) || "0.00"}
+                  </h1>
+                </div>
                 <img 
-                  className="rounded-full w-full h-full" 
-                  src="https://img.freepik.com/premium-photo/3d-rendering-avatar-design_1258715-60685.jpg" 
+                  className="w-[70px] h-[70px]" 
+                  src="https://cdn3d.iconscout.com/3d/premium/thumb/secure-wallet-3d-icon-download-in-png-blend-fbx-gltf-file-formats--balance-money-business-payment-shopping-pack-e-commerce-icons-5769610.png?f=webp" 
                   alt="" 
                 />
               </div>
             </div>
 
-            <div className="mt-[50px]">
-              <div className="bg-white/50 backdrop-blur p-2 rounded-[10px]">
-                <div className="flex justify-between items-center gap-2">
-                  <div>
-                    <h1 className="text-orange-500 font-semibold text-[16px]">Current Balance</h1>
-                    <h1 className="text-orange-500 font-semibold text-[26px]">${currentBalance.toFixed(2)}</h1>
-                  </div>
-                  <img 
-                    className="w-[70px] h-[70px]" 
-                    src="https://cdn3d.iconscout.com/3d/premium/thumb/secure-wallet-3d-icon-download-in-png-blend-fbx-gltf-file-formats--balance-money-business-payment-shopping-pack-e-commerce-icons-5769610.png?f=webp" 
-                    alt="" 
-                  />
+            {/* Amount */}
+            <div className="mt-4">
+              <label 
+                htmlFor="amount" 
+                className="block mb-2 text-sm font-medium text-orange-600"
+              >
+                Amount
+              </label>
+              <div className="relative mb-2">
+                <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                  <i className="fi fi-sr-money-bill-wave w-4 h-5 text-orange-500"></i>
+                </div>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => !selectedPackage && setAmount(Number(e.target.value))}
+                  className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0 border-2 border-amber-500 focus:outline-2 font-bold text-orange-500 focus:outline-amber-600 bg-white/50"
+                  placeholder="Enter Amount to Deposit"
+                  readOnly={!!selectedPackage}
+                />
+              </div>
+            </div>
+
+            {/* Payment method */}
+            <div className="mt-4">
+              <div className="mb-2">
+                <label 
+                  htmlFor="payment_method" 
+                  className="block mb-2 text-sm font-medium text-orange-600"
+                >
+                  Deposit Method
+                </label>
+                <div className="relative mb-2">
+                  <select
+                    value={selectedMethod}
+                    onChange={handleMethodChange}
+                    className="bg-white/50 text-orange-500 text-sm rounded-lg w-full undefined p-[12px] border-2 border-orange-600 focus:!outline-0 focus:outline-transparent border-2 border-amber-500 focus:outline-2 focus:outline-amber-600 bg-white/50"
+                  >
+                    <option value="">Select Deposit Method</option>
+                    {paymentMethods.map((method) => (
+                      <option key={method.id} value={method.id}>
+                        {method.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
+            </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="mt-4">
-                  <label className="block mb-2 text-sm font-medium text-orange-600">
-                    Amount
+            {/* Payment details */}
+            {selectedMethod && (
+              <div className="mt-4">
+                <div className="border-2 border-orange-500 rounded-[10px] my-[20px]">
+                  <div className="px-3 border-b-2 border-orange-500">
+                    <h1 className="font-normal text-[14px] text-gray-500 mt-2">
+                      Our {getSelectedMethod()?.name} Number:
+                    </h1>
+                    <div className="flex items-center justify-between mb-2">
+                      <h1 className="font-bold text-sm text-orange-500 text-nowrap truncate">
+                        {getSelectedMethod()?.payment_number || "Not available"}
+                      </h1>
+                      <i 
+                        className="fi fi-sr-copy-alt leading-[0px] text-orange-500 hover:text-orange-600 cursor-pointer"
+                        onClick={() => copyToClipboard(getSelectedMethod()?.payment_number || "")}
+                      ></i>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between px-3 border-b-2 border-orange-500">
+                    <h1 className="font-normal text-[14px] text-gray-500 my-2">Amount:</h1>
+                    <h1 className="font-bold text-sm my-2 text-orange-500">
+                      {amount.toFixed(2)} {getSelectedMethod()?.currency || "USD"}
+                    </h1>
+                  </div>
+                  
+                  {getSelectedMethod()?.exchange_rate && (
+                    <div className="flex items-center justify-between px-3 border-b-2 border-orange-500">
+                      <h1 className="font-normal text-[14px] text-gray-500 my-2">Rate:</h1>
+                      <h1 className="font-bold text-sm my-2 text-orange-500">
+                        1 {getSelectedMethod()?.currency || "USD"} = {getSelectedMethod()?.exchange_rate.toFixed(2)} Taka
+                      </h1>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between px-3">
+                    <h1 className="font-normal text-[14px] text-gray-500 my-2">You Need To Pay:</h1>
+                    <h1 className="font-bold text-sm my-2 text-orange-500">
+                      {calculateLocalAmount()} Taka
+                    </h1>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payment form */}
+            <div className="mt-4">
+              <div className="bg-white/50 rounded-[20px] p-4">
+                <h1 className="text-center text-[16px] font-semibold text-orange-600 underline">
+                  After Pay Fill This Form Carefully
+                </h1>
+                
+                <div className="mt-[10px]">
+                  <label 
+                    htmlFor="transaction_id" 
+                    className="block mb-2 text-sm font-medium text-orange-500"
+                  >
+                    Your Payment Transaction ID
                   </label>
                   <div className="relative mb-2">
-                    <Input
-                      type="number"
-                      name="amount"
-                      className="bg-white/50 text-orange-400 ps-10 border-2 border-orange-500 focus:outline-none"
-                      placeholder="Enter Amount to Deposit"
-                      value={formData.amount}
-                      onChange={handleChange}
-                      disabled={selectedPackage !== null}
+                    <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                      <i className="fi fi-sr-file-invoice-dollar w-4 h-5 text-orange-500"></i>
+                    </div>
+                    <input
+                      type="text"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0 undefined"
+                      placeholder="Enter your Payment Transaction ID"
                     />
                   </div>
                 </div>
-
-                <div className="mt-4">
-                  <div className="mb-2">
-                    <label className="block mb-2 text-sm font-medium text-orange-600">
-                      Deposit Method
-                    </label>
-                    <select 
-                      name="paymentMethod"
-                      value={formData.paymentMethod}
-                      onChange={handleChange}
-                      className="bg-white/50 text-orange-500 text-sm rounded-lg w-full p-[12px] border-2 border-orange-600 focus:outline-none"
-                    >
-                      <option value="">Select Deposit Method</option>
-                      <option value="bKash">bKash</option>
-                      <option value="Nagad">Nagad</option>
-                      <option value="USDT">USDT</option>
-                    </select>
-                  </div>
+                
+                <div className="mt-[10px] mb-[30px]">
+                  <label 
+                    className="block mb-2 text-sm font-medium text-orange-500" 
+                    htmlFor="screenshot"
+                  >
+                    Upload Payment Screenshot
+                  </label>
+                  <input
+                    className="block w-full bg-transparent text-sm text-orange-500 border-2 border-orange-500 rounded-lg cursor-pointer bg-orange-50 py-[5px]"
+                    name="screenshot"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleScreenshotChange}
+                  />
                 </div>
-
+                
                 <div className="mt-4">
-                  <div className="border-2 border-orange-500 rounded-[10px] my-[20px]">
-                    <div className="px-3 border-b-2 border-orange-500">
-                      <h1 className="font-normal text-[14px] text-gray-500 mt-2">Our bKash Number:</h1>
-                      <div className="flex items-center justify-between mb-2">
-                        <h1 className="font-bold text-sm text-orange-500 text-nowrap truncate">
-                          {paymentInfo.accountNumber}
-                        </h1>
-                        <button 
-                          type="button"
-                          className="text-orange-500 hover:text-orange-600 cursor-pointer"
-                          onClick={() => {
-                            navigator.clipboard.writeText(paymentInfo.accountNumber);
-                            toast({
-                              title: "Copied",
-                              description: "Account number copied to clipboard",
-                            });
-                          }}
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between px-3 border-b-2 border-orange-500">
-                      <h1 className="font-normal text-[14px] text-gray-500 my-2">Amount:</h1>
-                      <h1 className="font-bold text-sm my-2 text-orange-500">{formData.amount.toFixed(2)} USDT</h1>
-                    </div>
-                    <div className="flex items-center justify-between px-3 border-b-2 border-orange-500">
-                      <h1 className="font-normal text-[14px] text-gray-500 my-2">Rate:</h1>
-                      <h1 className="font-bold text-sm my-2 text-orange-500">1 USDT = {paymentInfo.rate.toFixed(2)} Taka</h1>
-                    </div>
-                    <div className="flex items-center justify-between px-3">
-                      <h1 className="font-normal text-[14px] text-gray-500 my-2">You Need To Pay:</h1>
-                      <h1 className="font-bold text-sm my-2 text-orange-500">{toPay.toFixed(2)} Taka</h1>
-                    </div>
-                  </div>
+                  <Button
+                    type="button"
+                    className="bg-gradient-to-b hover:bg-gradient-to-t from-orange-500 to-orange-400 border-0 rounded-[12px] !w-[100%]"
+                    onClick={handleSubmit}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center text-body-5 px-4 py-2.5">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-body-5 px-4 py-2.5">
+                        Send Deposit Request!
+                      </span>
+                    )}
+                  </Button>
                 </div>
-
-                <div className="mt-4">
-                  <div className="bg-white/50 rounded-[20px] p-4">
-                    <h1 className="text-center text-[16px] font-semibold text-orange-600 underline">
-                      After Pay Fill This Form Carefully
-                    </h1>
-                    <div className="mt-[10px]">
-                      <label className="block mb-2 text-sm font-medium text-orange-500">
-                        Your Payment Transaction ID
-                      </label>
-                      <div className="relative mb-2">
-                        <Input
-                          type="text"
-                          name="transactionId"
-                          value={formData.transactionId}
-                          onChange={handleChange}
-                          className="bg-white/50 text-orange-400 ps-10 border-2 border-orange-500 focus:outline-none"
-                          placeholder="Enter your Payment Transaction ID"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-[10px] mb-[30px]">
-                      <label className="block mb-2 text-sm font-medium text-orange-500">
-                        Upload Payment Screenshot
-                      </label>
-                      <input
-                        className="block w-full bg-transparent text-sm text-orange-500 border-2 border-orange-500 rounded-lg cursor-pointer bg-orange-50 py-[5px]"
-                        type="file"
-                        name="screenshot"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <Button 
-                        type="submit"
-                        className="w-full bg-gradient-to-b from-orange-500 to-orange-400 hover:bg-gradient-to-t"
-                        disabled={uploadingFile}
-                      >
-                        {uploadingFile ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                            Processing...
-                          </>
-                        ) : (
-                          "Send Deposit Request!"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
       </div>
+      
       <BottomNavigation />
     </div>
   );

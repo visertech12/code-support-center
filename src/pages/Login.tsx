@@ -18,6 +18,33 @@ const Login = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAdminSetup, setIsCheckingAdminSetup] = useState(true);
+  
+  // Check if admin setup is needed
+  useEffect(() => {
+    const checkAdminSetup = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'admin_setup')
+          .single();
+
+        if (error) {
+          console.error('Error checking admin setup:', error);
+        } else if (data && !data.value.is_completed) {
+          // If admin setup is not completed, navigate to admin setup
+          navigate('/admin/login');
+        }
+      } catch (error) {
+        console.error('Error checking admin setup:', error);
+      } finally {
+        setIsCheckingAdminSetup(false);
+      }
+    };
+
+    checkAdminSetup();
+  }, [navigate]);
   
   // Redirect if already logged in
   useEffect(() => {
@@ -107,6 +134,19 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingAdminSetup) {
+    return (
+      <div className="auth-container flex items-center justify-center min-h-screen">
+        <div className="p-8 rounded-lg shadow-lg bg-white/50 backdrop-blur">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto" />
+            <p className="mt-2 text-orange-500">Initializing system...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">

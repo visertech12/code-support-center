@@ -20,6 +20,29 @@ CREATE TABLE profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create admin_users table for direct admin access
+CREATE TABLE admin_users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  full_name TEXT,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create app_settings table to manage application settings
+CREATE TABLE app_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  key TEXT UNIQUE NOT NULL,
+  value JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert admin setup status
+INSERT INTO app_settings (key, value) VALUES ('admin_setup', '{"is_completed": false}'::jsonb);
+
 -- Create transactions table to store all financial transactions
 CREATE TABLE transactions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -117,6 +140,20 @@ CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT
 CREATE POLICY "Admins can update all profiles" ON profiles FOR UPDATE
   USING (EXISTS (
     SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+  ));
+
+-- Admin users: Allow anonymous access for reading admin setup status (for first time setup)
+CREATE POLICY "Anyone can check admin setup status" ON app_settings FOR SELECT
+  USING (key = 'admin_setup');
+
+-- Admin users: Allow anonymous access for creating the first admin
+CREATE POLICY "Anyone can create the first admin" ON admin_users FOR INSERT
+  WITH CHECK (NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'admin_setup' AND value->>'is_completed' = 'true'));
+
+-- Admin users: Allow admins to read admin_users data
+CREATE POLICY "Admins can view admin users" ON admin_users FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM admin_users WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid())
   ));
 
 -- Transactions: Allow users to read their own transactions

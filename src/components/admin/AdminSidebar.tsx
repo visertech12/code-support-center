@@ -1,92 +1,69 @@
 
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { 
-  Users, 
-  Home, 
-  DollarSign, 
-  CreditCard, 
-  Bell, 
-  Settings, 
-  Package, 
-  LogOut,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabaseClient";
-import { toast } from "@/components/ui/use-toast";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { X } from 'lucide-react';
 
-interface SidebarItemProps {
-  icon: React.ReactNode;
-  label: string;
-  to: string;
-  onClick?: () => void;
+interface AdminSidebarProps {
+  show: boolean;
+  setShow: (show: boolean) => void;
 }
 
-const SidebarItem = ({ icon, label, to, onClick }: SidebarItemProps) => {
-  return (
-    <NavLink
-      to={to}
-      onClick={onClick}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center px-4 py-3 text-gray-600 hover:bg-orange-100 rounded-lg transition-colors",
-          isActive && "bg-orange-100 text-orange-600"
-        )
-      }
-    >
-      <div className="mr-3">{icon}</div>
-      <span>{label}</span>
-    </NavLink>
-  );
-};
+const AdminSidebar = ({ show, setShow }: AdminSidebarProps) => {
+  const location = useLocation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-const AdminSidebar = () => {
-  const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Logged out",
-        description: "Successfully logged out from admin panel",
-      });
-      navigate("/admin/login");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isActive = (path: string) => {
+    return location.pathname.includes(path) ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-orange-50';
   };
-  
+
   return (
-    <div className={cn(
-      "bg-white border-r border-gray-200 h-screen transition-all duration-300",
-      isCollapsed ? "w-20" : "w-64"
-    )}>
-      <div className="flex items-center justify-center h-16 border-b border-gray-200">
-        {!isCollapsed && (
-          <h1 className="text-xl font-semibold text-orange-500">MyStock Admin</h1>
-        )}
-        {isCollapsed && (
-          <h1 className="text-xl font-semibold text-orange-500">MS</h1>
+    <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-md transform ${show ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center">
+          <img src="https://mystock-admin.scriptbasket.com/assets/images/logoIcon/logo.png" alt="myStock Admin" className="h-8" />
+          <span className="ml-2 text-xl font-semibold">Admin Panel</span>
+        </div>
+        {isMobile && (
+          <button onClick={() => setShow(false)} className="p-1 rounded-md text-gray-500 hover:bg-gray-100">
+            <X size={20} />
+          </button>
         )}
       </div>
       
-      <div className="p-4 space-y-1">
-        <SidebarItem icon={<Home size={20} />} label="Dashboard" to="/admin/dashboard" />
-        <SidebarItem icon={<Users size={20} />} label="Users" to="/admin/users" />
-        <SidebarItem icon={<DollarSign size={20} />} label="Deposits" to="/admin/deposits" />
-        <SidebarItem icon={<CreditCard size={20} />} label="Withdrawals" to="/admin/withdrawals" />
-        <SidebarItem icon={<Package size={20} />} label="Packages" to="/admin/packages" />
-        <SidebarItem icon={<Bell size={20} />} label="Notices" to="/admin/notices" />
-        <SidebarItem icon={<Settings size={20} />} label="Settings" to="/admin/settings" />
-        <SidebarItem 
-          icon={<LogOut size={20} />} 
-          label="Logout" 
-          to="#" 
-          onClick={handleSignOut} 
-        />
+      <div className="py-4 overflow-y-auto">
+        <ul className="space-y-1 px-3">
+          <li>
+            <Link to="/admin/dashboard" className={`flex items-center p-2 rounded-lg ${isActive('/admin/dashboard')}`}>
+              <span className="ml-3">Dashboard</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/users" className={`flex items-center p-2 rounded-lg ${isActive('/admin/users')}`}>
+              <span className="ml-3">Users Management</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/deposits" className={`flex items-center p-2 rounded-lg ${isActive('/admin/deposits')}`}>
+              <span className="ml-3">Deposits Management</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/withdrawals" className={`flex items-center p-2 rounded-lg ${isActive('/admin/withdrawals')}`}>
+              <span className="ml-3">Withdrawals Management</span>
+            </Link>
+          </li>
+        </ul>
       </div>
-    </div>
+    </aside>
   );
 };
 
