@@ -8,16 +8,6 @@ import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Loader2 } from "lucide-react";
 
-interface Stock {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  dailyProfit: number;
-  totalProfit: number;
-  validity: number;
-}
-
 interface PaymentMethod {
   id: string;
   name: string;
@@ -26,54 +16,16 @@ interface PaymentMethod {
   exchange_rate?: number;
 }
 
-// Stock data (to be replaced with database when API is ready)
-const stocks: Stock[] = [
-  {
-    id: 1,
-    name: "TSLA",
-    price: 50,
-    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca7f1bc64751707769627.png",
-    dailyProfit: 5,
-    totalProfit: 75,
-    validity: 15
-  },
-  {
-    id: 2,
-    name: "NVIDIA",
-    price: 100,
-    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca7f71caba51707769713.png",
-    dailyProfit: 10,
-    totalProfit: 150,
-    validity: 15
-  },
-  {
-    id: 3,
-    name: "META",
-    price: 200,
-    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca7fc9efb401707769801.png",
-    dailyProfit: 20,
-    totalProfit: 300,
-    validity: 15
-  },
-  {
-    id: 4,
-    name: "AMD",
-    price: 300,
-    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca80235fb711707769891.jpg",
-    dailyProfit: 30,
-    totalProfit: 450,
-    validity: 15
-  },
-  {
-    id: 5,
-    name: "AMZN",
-    price: 400,
-    image: "https://mystock-admin.scriptbasket.com/assets/images/plan/65ca81545efd51707770196.jpg",
-    dailyProfit: 40,
-    totalProfit: 600,
-    validity: 15
-  }
-];
+interface Package {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string;
+  daily_profit_percentage: number;
+  total_return_percentage: number;
+  duration_days: number;
+  description?: string;
+}
 
 const Recharge = () => {
   const { id } = useParams<{ id: string }>();
@@ -89,29 +41,55 @@ const Recharge = () => {
     { id: "1001", name: "Nagad", payment_number: "018xxxxxx77" },
     { id: "1002", name: "USDT", payment_number: "TC8xxxxx9F", currency: "USDT", exchange_rate: 100 }
   ]);
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingPackage, setIsLoadingPackage] = useState<boolean>(false);
 
-  // Get stock details if id is provided
+  // Get package details if id is provided
   useEffect(() => {
-    if (id) {
-      const stockId = parseInt(id);
-      const stock = stocks.find(s => s.id === stockId);
-      if (stock) {
-        setSelectedStock(stock);
-        setAmount(stock.price);
+    const fetchPackage = async () => {
+      if (id) {
+        setIsLoadingPackage(true);
+        try {
+          const { data, error } = await supabase
+            .from('packages')
+            .select('*')
+            .eq('id', id)
+            .single();
+            
+          if (error) {
+            throw error;
+          }
+          
+          if (data) {
+            setSelectedPackage(data);
+            setAmount(data.price);
+          } else {
+            toast({
+              title: "Error",
+              description: "Package not found",
+              variant: "destructive",
+            });
+            navigate('/package');
+          }
+        } catch (error: any) {
+          console.error('Error fetching package:', error.message);
+          toast({
+            title: "Error",
+            description: "Failed to load package details",
+            variant: "destructive",
+          });
+          navigate('/package');
+        } finally {
+          setIsLoadingPackage(false);
+        }
       } else {
-        toast({
-          title: "Error",
-          description: "Stock not found",
-          variant: "destructive",
-        });
-        navigate('/package');
+        // Default amount for general recharge
+        setAmount(50);
       }
-    } else {
-      // Default amount for general recharge
-      setAmount(50);
-    }
+    };
+    
+    fetchPackage();
   }, [id, navigate]);
 
   const handleBack = () => {
@@ -200,17 +178,15 @@ const Recharge = () => {
       // Create deposit record
       const { error: depositError } = await supabase
         .from('deposits')
-        .insert([
-          {
-            user_id: user.id,
-            amount: amount,
-            payment_method: paymentMethods.find(m => m.id === selectedMethod)?.name || selectedMethod,
-            transaction_id: transactionId,
-            screenshot_url: screenshotUrl,
-            package_id: selectedStock ? String(selectedStock.id) : null,
-            status: 'pending'
-          }
-        ]);
+        .insert({
+          user_id: user.id,
+          amount: amount,
+          payment_method: paymentMethods.find(m => m.id === selectedMethod)?.name || selectedMethod,
+          transaction_id: transactionId,
+          screenshot_url: screenshotUrl,
+          package_id: selectedPackage ? selectedPackage.id : null,
+          status: 'pending'
+        });
 
       if (depositError) {
         throw depositError;
@@ -219,15 +195,13 @@ const Recharge = () => {
       // Create transaction record
       const { error: transactionError } = await supabase
         .from('transactions')
-        .insert([
-          {
-            user_id: user.id,
-            amount: amount,
-            type: 'deposit',
-            status: 'pending',
-            description: `Deposit of $${amount} ${selectedStock ? `for stock: ${selectedStock.name}` : '(account recharge)'}`
-          }
-        ]);
+        .insert({
+          user_id: user.id,
+          amount: amount,
+          type: 'deposit',
+          status: 'pending',
+          description: `Deposit of $${amount} ${selectedPackage ? `for stock: ${selectedPackage.name}` : '(account recharge)'}`
+        });
 
       if (transactionError) {
         throw transactionError;
@@ -264,6 +238,14 @@ const Recharge = () => {
     return (amount * 100).toFixed(2); // Default exchange rate
   };
 
+  if (isLoadingPackage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative overflow-x-hidden min-h-[100vh]">
       {/* Background gradient */}
@@ -290,7 +272,7 @@ const Recharge = () => {
                 />
               </div>
               <h1 className="text-white text-[16px]">
-                {selectedStock ? `Top-up for ${selectedStock.name}` : "Recharge Account"}
+                {selectedPackage ? `Top-up for ${selectedPackage.name}` : "Recharge Account"}
               </h1>
             </div>
             <div className="bg-gradient-to-b from-gray-200 to-orange-200 h-[40px] w-[40px] rounded-full p-[2px]">
@@ -336,10 +318,10 @@ const Recharge = () => {
                   type="number"
                   id="amount"
                   value={amount}
-                  onChange={(e) => !selectedStock && setAmount(Number(e.target.value))}
+                  onChange={(e) => !selectedPackage && setAmount(Number(e.target.value))}
                   className="bg-white/50 text-orange-400 text-sm rounded-lg w-full ps-10 p-2.5 border-2 border-orange-500 focus:!outline-0 border-amber-500 focus:outline-2 font-bold text-orange-500 focus:outline-amber-600 bg-white/50"
                   placeholder="Enter Amount to Deposit"
-                  readOnly={!!selectedStock}
+                  readOnly={!!selectedPackage}
                 />
               </div>
             </div>

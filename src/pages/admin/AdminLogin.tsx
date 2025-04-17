@@ -39,7 +39,9 @@ const AdminLogin = () => {
         }
 
         // If no admin users exist, show first time setup
-        setIsFirstTimeSetup(count === 0);
+        if (count !== null) {
+          setIsFirstTimeSetup(count === 0);
+        }
         setSetupChecked(true);
       } catch (error) {
         console.error('Error checking admin setup:', error);
@@ -89,15 +91,14 @@ const AdminLogin = () => {
       const passwordHash = await bcrypt.hash(formData.password, 10);
       
       // Create admin user
-      const { data: adminData, error: adminError } = await supabase
+      const { error: adminError } = await supabase
         .from('admin_users')
-        .insert([{
+        .insert({
           email: formData.email,
           password_hash: passwordHash,
           full_name: formData.fullName,
           status: 'active'
-        }])
-        .select();
+        });
 
       if (adminError) {
         throw adminError;
@@ -173,7 +174,7 @@ const AdminLogin = () => {
           throw userError;
         }
 
-        if (userData.role !== 'admin') {
+        if (userData?.role !== 'admin') {
           throw new Error('Not authorized as admin');
         }
       } else {
