@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
-import { initializeStorage } from "@/lib/supabaseClient";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -40,11 +38,6 @@ import WithdrawalsManagement from "./pages/admin/WithdrawalsManagement";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize storage
-  useEffect(() => {
-    initializeStorage();
-  }, []);
-  
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -136,7 +129,6 @@ const App = () => {
                   <RunningPackages />
                 </ProtectedRoute>
               } />
-              {/* Redirect runing-packages (typo) to running-packages */}
               <Route path="/runing-packages" element={
                 <ProtectedRoute>
                   <RunningPackages />

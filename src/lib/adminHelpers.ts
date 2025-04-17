@@ -1,5 +1,5 @@
 
-import { supabase } from './supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Check if the admin setup has been completed
@@ -21,39 +21,5 @@ export const checkAdminSetup = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Error checking admin setup:', error);
     return false;
-  }
-};
-
-/**
- * Initialize storage buckets if they don't exist
- */
-export const initializeStorage = async (): Promise<void> => {
-  try {
-    const { data, error } = await supabase.storage.getBucket('screenshots');
-    
-    if (error && error.message.includes('bucket not found')) {
-      // Create the bucket if it doesn't exist
-      const { error: createError } = await supabase.storage.createBucket('screenshots', {
-        public: false,
-        fileSizeLimit: 5242880, // 5MB
-      });
-      
-      if (createError) {
-        console.error('Error creating screenshots bucket:', createError);
-      } else {
-        console.log('Screenshots bucket created successfully');
-        
-        // Set bucket policy for public read access
-        const { error: policyError } = await supabase.storage.updateBucket('screenshots', {
-          public: true,
-        });
-        
-        if (policyError) {
-          console.error('Error setting bucket policy:', policyError);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error initializing storage:', error);
   }
 };
