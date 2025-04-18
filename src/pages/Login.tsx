@@ -1,56 +1,19 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaKey } from 'react-icons/fa';
-import { isValidEmail } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { isValidEmail } from '@/lib/utils';
+import { toast } from '@/components/ui/use-toast';
 
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingAdminSetup, setIsCheckingAdminSetup] = useState(true);
-  
-  // Check if admin setup is needed
-  useEffect(() => {
-    const checkAdminSetup = async () => {
-      try {
-        // Check if any admin users exist
-        const { count, error } = await supabase
-          .from('admin_users')
-          .select('*', { count: 'exact', head: true });
-
-        if (error) {
-          console.error('Error checking admin setup:', error);
-        } else if (count === 0) {
-          // If no admin users, redirect to admin setup
-          navigate('/admin/login');
-        }
-      } catch (error) {
-        console.error('Error checking admin setup:', error);
-      } finally {
-        setIsCheckingAdminSetup(false);
-      }
-    };
-
-    checkAdminSetup();
-  }, [navigate]);
-  
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -79,49 +42,23 @@ const Login = () => {
         throw new Error('Please enter a valid email address');
       }
       
-      // Determine if input is email or username
-      const isEmail = formData.username.includes('@');
-      
-      let credentials;
-      if (isEmail) {
-        // Login with email
-        credentials = {
-          email: formData.username,
-          password: formData.password
-        };
-      } else {
-        // First get the email associated with this username
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('username', formData.username)
-          .single();
-          
-        if (userError || !userData?.email) {
-          throw new Error('User not found');
-        }
+      // Mock login - In a real app, you'd authenticate with your API
+      setTimeout(() => {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
         
-        credentials = {
-          email: userData.email,
-          password: formData.password
+        // Store mock user data
+        const mockUser = {
+          id: '123456',
+          username: formData.username,
+          email: formData.username.includes('@') ? formData.username : 'user@example.com',
+          role: 'user'
         };
-      }
-      
-      // Sign in with email and password
-      const { data, error } = await supabase.auth.signInWithPassword(credentials);
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      
-      // Redirect to dashboard or saved location
-      const from = (location.state as any)?.from?.pathname || '/dashboard';
-      navigate(from);
+        
+        navigate('/dashboard');
+      }, 1000);
     } catch (error: any) {
       setError(error.message);
       toast({
@@ -129,23 +66,9 @@ const Login = () => {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
-
-  if (isCheckingAdminSetup) {
-    return (
-      <div className="auth-container flex items-center justify-center min-h-screen">
-        <div className="p-8 rounded-lg shadow-lg bg-white/50 backdrop-blur">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto" />
-            <p className="mt-2 text-orange-500">Initializing system...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="auth-container">
