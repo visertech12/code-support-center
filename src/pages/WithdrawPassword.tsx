@@ -4,39 +4,29 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabaseClient";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Lock, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const WithdrawPassword = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [withdrawPin, setWithdrawPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPinSet, setIsPinSet] = useState(false);
   
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/");
-        return;
-      }
-      
-      // Check if user has already set a withdraw PIN
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('withdraw_pin')
-        .eq('id', session.user.id)
-        .single();
-        
-      if (!error && data && data.withdraw_pin) {
-        setIsPinSet(true);
-      }
-    };
+    // Check if the user is logged in
+    if (!user) {
+      navigate("/");
+      return;
+    }
     
-    checkAuth();
-  }, [navigate]);
+    // Simulate checking if user has already set a withdraw PIN
+    // In a real app, this would come from the user profile data
+    const hasPin = Math.random() > 0.5; // randomly decide for demo
+    setIsPinSet(hasPin);
+  }, [navigate, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,22 +53,11 @@ const WithdrawPassword = () => {
     setIsLoading(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Simulate API request delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!session) {
-        navigate("/");
-        return;
-      }
-      
-      // Update withdraw PIN
-      const { error } = await supabase
-        .from('profiles')
-        .update({ withdraw_pin: withdrawPin })
-        .eq('id', session.user.id);
-        
-      if (error) {
-        throw error;
-      }
+      // In a real app, we would update the user's withdraw PIN in the database
+      console.log('Withdraw PIN updated:', withdrawPin);
       
       toast({
         title: "Success",

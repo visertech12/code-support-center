@@ -1,7 +1,16 @@
+
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
-import { Transaction } from '@/types/transaction';
+import { mockTransactions } from '@/lib/utils';
+
+interface Transaction {
+  id: string;
+  type: 'deposit' | 'withdrawal' | 'investment' | 'profit';
+  amount: number;
+  status: 'pending' | 'completed' | 'rejected';
+  description?: string;
+  created_at: string;
+}
 
 const TransactionHistory = () => {
   const { user } = useAuth();
@@ -9,33 +18,13 @@ const TransactionHistory = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
-        
-        // Cast each transaction's type to ensure it matches our TransactionType
-        const typedTransactions = data.map(transaction => ({
-          ...transaction,
-          type: transaction.type as Transaction['type']
-        }));
-        
-        setTransactions(typedTransactions);
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Simulate API fetch with delay
+    const timer = setTimeout(() => {
+      setTransactions(mockTransactions);
+      setIsLoading(false);
+    }, 800);
     
-    fetchTransactions();
+    return () => clearTimeout(timer);
   }, [user]);
   
   return (

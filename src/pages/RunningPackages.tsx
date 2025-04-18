@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { mockUserPackages } from "@/lib/utils";
 
 interface UserPackage {
   id: string;
@@ -31,54 +31,14 @@ const RunningPackages = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchUserPackages = async () => {
-      try {
-        if (!user) return;
-        
-        const { data, error } = await supabase
-          .from('user_packages')
-          .select(`
-            id,
-            purchase_amount,
-            status,
-            start_date,
-            end_date,
-            created_at,
-            package:package_id (
-              name, 
-              price, 
-              daily_profit_percentage, 
-              duration_days, 
-              total_return_percentage
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Error fetching packages",
-            description: error.message
-          });
-          return;
-        }
-
-        setPackages(data || []);
-      } catch (error) {
-        console.error("Error fetching user packages:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch your stocks. Please try again."
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserPackages();
-  }, [user, toast]);
+    // Simulate API fetch with delay
+    const timer = setTimeout(() => {
+      setPackages(mockUserPackages);
+      setIsLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, [user]);
 
   // Calculate daily profit amount
   const calculateDailyProfit = (purchaseAmount: number, dailyProfitPercentage: number) => {

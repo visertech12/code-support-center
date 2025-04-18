@@ -11,6 +11,15 @@ export const isValidEmail = (email: string): boolean => {
   return re.test(String(email).toLowerCase());
 };
 
+export const isValidPhone = (phone: string): boolean => {
+  const re = /^\+?[0-9]{10,15}$/;
+  return re.test(phone);
+};
+
+export const isStrongPassword = (password: string): boolean => {
+  return password.length >= 8;
+};
+
 // Mock data for packages
 export const mockPackages = [
   {
@@ -67,5 +76,55 @@ export const mockPackages = [
     total_return_percentage: 150,
     image_url: 'https://mystock-admin.scriptbasket.com/assets/images/plan/65ca81545efd51707770196.jpg',
     status: 'active'
+  }
+];
+
+// Mock data for user packages
+export const mockUserPackages = [
+  {
+    id: '1',
+    package: mockPackages[0],
+    purchase_amount: 50,
+    status: 'active',
+    start_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '2',
+    package: mockPackages[2],
+    purchase_amount: 200,
+    status: 'active',
+    start_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    end_date: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString(), // 12 days from now
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+  }
+];
+
+// Mock data for transactions
+export const mockTransactions = [
+  {
+    id: '1',
+    type: 'deposit',
+    amount: 500,
+    status: 'completed',
+    description: 'Deposit to account',
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '2',
+    type: 'investment',
+    amount: 200,
+    status: 'completed',
+    description: 'Investment in META stock',
+    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '3',
+    type: 'profit',
+    amount: 20,
+    status: 'completed',
+    description: 'Daily profit from META stock',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
   }
 ];

@@ -1,12 +1,11 @@
-
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaUser, FaKey, FaPhone, FaGlobe, FaUserPlus } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { isValidEmail, isValidPhone, isStrongPassword } from '@/lib/utils';
-import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 // Countries data for the dropdown
 const countries = [
@@ -22,6 +21,8 @@ const countries = [
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { register } = useAuth();
+  
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -75,93 +76,23 @@ const Register = () => {
         throw new Error('Password must be at least 8 characters');
       }
       
-      // Check if username already exists
-      const { data: existingUser, error: userCheckError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', formData.username)
-        .maybeSingle();
-        
-      if (existingUser) {
-        throw new Error('Username already taken');
-      }
-      
-      // Register with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      // Register with mock auth service
+      await register({
+        username: formData.username,
         email: formData.email,
+        phone: formData.phone,
+        country: formData.country,
         password: formData.password,
-        options: {
-          data: {
-            username: formData.username,
-            phone: formData.phone,
-            country: formData.country
-          }
-        }
+        referCode: formData.referCode
       });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Get referrer ID if referral code provided
-      let referrerId = null;
-      if (formData.referCode) {
-        const { data: referrer } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('referral_code', formData.referCode)
-          .maybeSingle();
-          
-        if (referrer) {
-          referrerId = referrer.id;
-        }
-      }
-      
-      // Generate unique referral code for the new user
-      const referralCode = generateReferralCode();
-      
-      // Create user profile with additional info
-      if (data.user) {
-        await supabase.from('profiles').insert([
-          {
-            id: data.user.id,
-            username: formData.username,
-            email: formData.email,
-            phone: formData.phone,
-            country: formData.country,
-            referral_code: referralCode,
-            referred_by: referrerId,
-            status: 'active',
-            balance: 0
-          }
-        ]);
-        
-        // If there's a referrer, update their referral count
-        if (referrerId) {
-          // Get current referral count
-          const { data: referrerData } = await supabase
-            .from('profiles')
-            .select('referral_count')
-            .eq('id', referrerId)
-            .single();
-            
-          if (referrerData) {
-            const newCount = (referrerData.referral_count || 0) + 1;
-            await supabase
-              .from('profiles')
-              .update({ referral_count: newCount })
-              .eq('id', referrerId);
-          }
-        }
-      }
       
       toast({
         title: "Registration Successful",
         description: "Your account has been created. You can now log in.",
       });
       
-      // Redirect to login page
-      navigate('/');
+      // Redirect to dashboard
+      navigate('/dashboard');
     } catch (error: any) {
       setError(error.message);
       toast({
