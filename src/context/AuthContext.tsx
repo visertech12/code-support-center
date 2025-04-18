@@ -1,5 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiService } from '@/services/api';
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -35,18 +37,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Mock users for demo
-  const mockUsers = [
-    {
-      id: '1',
-      email: 'user@example.com',
-      username: 'demo',
-      password: 'password',
-      balance: 1000,
-      role: 'user'
-    }
-  ];
-
   useEffect(() => {
     // Check if user is already logged in via sessionStorage
     const storedUser = sessionStorage.getItem('user');
@@ -60,26 +50,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLoading(true);
     
     try {
-      // Simulate API request delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiService.login({ email, password });
       
-      // Find user in mock data
-      const foundUser = mockUsers.find(
-        u => u.email === email && u.password === password
-      );
-      
-      if (!foundUser) {
-        throw new Error('Invalid credentials');
+      if (response.user) {
+        // Store user in session storage
+        sessionStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+        toast.success("Login successful!");
+      } else {
+        throw new Error('Invalid response from server');
       }
-      
-      // Remove password before storing
-      const { password: _, ...userWithoutPassword } = foundUser;
-      
-      // Store user in session storage
-      sessionStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      setUser(userWithoutPassword);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      toast.error(error.message || 'Login failed');
       throw error;
     } finally {
       setIsLoading(false);
@@ -88,34 +71,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (userData: any) => {
     setIsLoading(true);
-    
     try {
-      // Simulate API request delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, we would send registration data to an API
-      // For now, just simulate success
-      
-      // Check if user already exists
-      if (mockUsers.some(u => u.email === userData.email)) {
-        throw new Error('User already exists');
-      }
-      
-      console.log('User registered:', userData);
-      
-      // Auto login after registration
-      const newUser = {
-        id: String(mockUsers.length + 1),
-        email: userData.email,
-        username: userData.username,
-        balance: 0,
-        role: 'user'
-      };
-      
-      sessionStorage.setItem('user', JSON.stringify(newUser));
-      setUser(newUser);
-    } catch (error) {
+      // TODO: Implement registration endpoint when available
+      console.log('Registration data:', userData);
+      toast.error('Registration not implemented yet');
+    } catch (error: any) {
       console.error('Registration error:', error);
+      toast.error(error.message || 'Registration failed');
       throw error;
     } finally {
       setIsLoading(false);
@@ -125,6 +87,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     sessionStorage.removeItem('user');
     setUser(null);
+    toast.success("Logged out successfully");
   };
 
   return (
