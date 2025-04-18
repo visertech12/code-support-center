@@ -13,19 +13,8 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import NoticeBoard from "./pages/NoticeBoard";
-import Package from "./pages/Package";
 import Team from "./pages/Team";
-import Mining from "./pages/Mining";
-import Apps from "./pages/Apps";
-import Guide from "./pages/Guide";
 import Profile from "./pages/Profile";
-import Recharge from "./pages/Recharge";
-import ProfileSetting from "./pages/ProfileSetting";
-import AccountPassword from "./pages/AccountPassword";
-import WithdrawPassword from "./pages/WithdrawPassword";
-import WithdrawWallet from "./pages/WithdrawWallet";
-import TransactionHistory from "./pages/TransactionHistory";
-import RunningPackages from "./pages/RunningPackages";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +29,7 @@ const App = () => {
               <Route path="/" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
-              {/* Protected user routes */}
+              {/* Protected routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
@@ -51,29 +40,9 @@ const App = () => {
                   <NoticeBoard />
                 </ProtectedRoute>
               } />
-              <Route path="/package" element={
-                <ProtectedRoute>
-                  <Package />
-                </ProtectedRoute>
-              } />
-              <Route path="/mining" element={
-                <ProtectedRoute>
-                  <Mining />
-                </ProtectedRoute>
-              } />
               <Route path="/team/:level" element={
                 <ProtectedRoute>
                   <Team />
-                </ProtectedRoute>
-              } />
-              <Route path="/apps" element={
-                <ProtectedRoute>
-                  <Apps />
-                </ProtectedRoute>
-              } />
-              <Route path="/guide" element={
-                <ProtectedRoute>
-                  <Guide />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
@@ -81,52 +50,8 @@ const App = () => {
                   <Profile />
                 </ProtectedRoute>
               } />
-              <Route path="/profile-setting" element={
-                <ProtectedRoute>
-                  <ProfileSetting />
-                </ProtectedRoute>
-              } />
-              <Route path="/account-password" element={
-                <ProtectedRoute>
-                  <AccountPassword />
-                </ProtectedRoute>
-              } />
-              <Route path="/withdraw-password" element={
-                <ProtectedRoute>
-                  <WithdrawPassword />
-                </ProtectedRoute>
-              } />
-              <Route path="/withdraw-wallet" element={
-                <ProtectedRoute>
-                  <WithdrawWallet />
-                </ProtectedRoute>
-              } />
-              <Route path="/recharge/:id" element={
-                <ProtectedRoute>
-                  <Recharge />
-                </ProtectedRoute>
-              } />
-              <Route path="/recharge" element={
-                <ProtectedRoute>
-                  <Recharge />
-                </ProtectedRoute>
-              } />
-              <Route path="/transactions" element={
-                <ProtectedRoute>
-                  <TransactionHistory />
-                </ProtectedRoute>
-              } />
-              <Route path="/running-packages" element={
-                <ProtectedRoute>
-                  <RunningPackages />
-                </ProtectedRoute>
-              } />
-              <Route path="/runing-packages" element={
-                <ProtectedRoute>
-                  <RunningPackages />
-                </ProtectedRoute>
-              } />
               
+              {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
@@ -139,3 +64,4 @@ const App = () => {
 };
 
 export default App;
+

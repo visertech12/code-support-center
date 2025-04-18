@@ -8,7 +8,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed z-50 w-full h-16 max-w-[480px] -translate-x-1/2 bottom-0 left-1/2 bg-white">
-      <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
+      <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
         <Link 
           className={`inline-flex flex-col items-center justify-center px-5 group ${currentPath === "/dashboard" ? "bottomImgActive" : "bottomImg"}`} 
           to="/dashboard"
@@ -20,26 +20,14 @@ const BottomNavigation = () => {
           />
         </Link>
         <Link 
-          className={`inline-flex flex-col items-center justify-center px-5 group ${currentPath === "/package" ? "bottomImgActive" : "bottomImg"}`} 
-          to="/package"
+          className={`inline-flex flex-col items-center justify-center px-5 group ${currentPath === "/notice-board" ? "bottomImgActive" : "bottomImg"}`} 
+          to="/notice-board"
         >
           <img 
             className="w-[30px] h-[30px] p-[1px]" 
-            src="https://cdn-icons-png.flaticon.com/128/10645/10645200.png" 
-            alt="package" 
+            src="https://cdn-icons-png.flaticon.com/128/2645/2645897.png" 
+            alt="notice" 
           />
-        </Link>
-        <Link 
-          className="inline-flex flex-col items-center justify-center px-5 group mt-[-15px] mb-auto" 
-          to="/mining"
-        >
-          <div className="saturate-150 bg-gradient-to-b from-orange-300 to-orange-600 w-[60px] h-[60px] rounded-full p-3 ring-[5px] ring-orange-100">
-            <img 
-              className="w-full h-full invert rounded-full" 
-              src="https://cdn-icons-png.flaticon.com/128/17025/17025367.png" 
-              alt="mining" 
-            />
-          </div>
         </Link>
         <Link 
           className={`inline-flex flex-col items-center justify-center px-5 group ${currentPath.startsWith("/team") ? "bottomImgActive" : "bottomImg"}`} 
@@ -67,3 +55,4 @@ const BottomNavigation = () => {
 };
 
 export default BottomNavigation;
+
