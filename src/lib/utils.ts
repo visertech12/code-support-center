@@ -1,6 +1,6 @@
-
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Transaction } from "@/types/transaction";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -101,30 +101,36 @@ export const mockUserPackages = [
   }
 ];
 
-// Mock data for transactions
-export const mockTransactions = [
+// Mock data for transactions - updated to match Transaction type
+export const mockTransactions: Partial<Transaction>[] = [
   {
     id: '1',
+    user_id: 'user1',
     type: 'deposit',
     amount: 500,
     status: 'completed',
     description: 'Deposit to account',
-    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '2',
-    type: 'investment',
+    user_id: 'user1',
+    type: 'withdrawal',
     amount: 200,
     status: 'completed',
     description: 'Investment in META stock',
-    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString()
+    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '3',
-    type: 'profit',
+    user_id: 'user1',
+    type: 'deposit',
     amount: 20,
     status: 'completed',
     description: 'Daily profit from META stock',
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
   }
 ];

@@ -2,15 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { mockTransactions } from '@/lib/utils';
-
-interface Transaction {
-  id: string;
-  type: 'deposit' | 'withdrawal' | 'investment' | 'profit';
-  amount: number;
-  status: 'pending' | 'completed' | 'rejected';
-  description?: string;
-  created_at: string;
-}
+import { Transaction } from '@/types/transaction';
 
 const TransactionHistory = () => {
   const { user } = useAuth();
@@ -20,7 +12,8 @@ const TransactionHistory = () => {
   useEffect(() => {
     // Simulate API fetch with delay
     const timer = setTimeout(() => {
-      setTransactions(mockTransactions);
+      // Cast mockTransactions to the Transaction type to ensure compatibility
+      setTransactions(mockTransactions as unknown as Transaction[]);
       setIsLoading(false);
     }, 800);
     
