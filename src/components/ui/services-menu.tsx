@@ -47,18 +47,14 @@ export function ServicesMenu() {
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link to="/coins" legacyBehavior passHref>
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              Supported Coins
-            </NavigationMenuLink>
+          <Link to="/coins" className={navigationMenuTriggerStyle()}>
+            Supported Coins
           </Link>
         </NavigationMenuItem>
         
         <NavigationMenuItem>
-          <Link to="/about" legacyBehavior passHref>
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              About
-            </NavigationMenuLink>
+          <Link to="/about" className={navigationMenuTriggerStyle()}>
+            About
           </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
