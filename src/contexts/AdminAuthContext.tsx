@@ -12,9 +12,9 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Check if user is already logged in from localStorage
+  // Check if user is already logged in from sessionStorage
   useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth');
+    const adminAuth = sessionStorage.getItem('adminAuth');
     if (adminAuth === 'true') {
       setIsLoggedIn(true);
     }
@@ -24,7 +24,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Static credentials check
     if (username === 'admin' && password === 'admin') {
       setIsLoggedIn(true);
-      localStorage.setItem('adminAuth', 'true');
+      sessionStorage.setItem('adminAuth', 'true');
       return true;
     }
     return false;
@@ -32,7 +32,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const logout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('adminAuth');
+    sessionStorage.removeItem('adminAuth');
   };
 
   return (

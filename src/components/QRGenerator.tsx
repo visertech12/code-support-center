@@ -53,13 +53,17 @@ const QRGenerator = () => {
   const [qrBgColor, setQrBgColor] = useState('#FFFFFF');
   const { toast } = useToast();
 
+  const handleCoinChange = (newCoinId: string) => {
+    setCoinId(newCoinId);
+    const networks = NETWORKS[newCoinId as keyof typeof NETWORKS];
+    if (networks && networks.length > 0) {
+      setNetworkId(networks[0].id);
+    }
+  };
+
   useEffect(() => {
     if (coinId) {
-      setCoinId(coinId);
-      const networks = NETWORKS[coinId as keyof typeof NETWORKS];
-      if (networks && networks.length > 0) {
-        setNetworkId(networks[0].id);
-      }
+      handleCoinChange(coinId);
     }
   }, [coinId]);
 
@@ -154,7 +158,7 @@ const QRGenerator = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="coin" className="text-base font-medium">Cryptocurrency</Label>
-                <Select value={coinId_} onValueChange={setCoinId}>
+                <Select value={coinId_} onValueChange={handleCoinChange}>
                   <SelectTrigger 
                     id="coin" 
                     className="h-12 text-base bg-background/50 backdrop-blur-sm border-2 hover:border-primary/50 transition-colors"
