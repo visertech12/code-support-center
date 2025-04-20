@@ -10,6 +10,7 @@ import Layout from "./pages/Layout";
 import Index from "./pages/Index";
 import CoinsPage from "./pages/CoinsPage";
 import NetworksPage from "./pages/NetworksPage";
+import TransactionVerifierPage from "./pages/TransactionVerifierPage";
 import AboutPage from "./pages/AboutPage";
 import CoinDetailPage from "./pages/CoinDetailPage";
 import NetworkDetailPage from "./pages/NetworkDetailPage";
@@ -46,6 +47,7 @@ const App = () => {
                         <Route path="/coins/:coinId" element={<CoinDetailPage />} />
                         <Route path="/networks" element={<NetworksPage />} />
                         <Route path="/networks/:networkId" element={<NetworkDetailPage />} />
+                        <Route path="/verify" element={<TransactionVerifierPage />} />
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/terms" element={<TermsPage />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
