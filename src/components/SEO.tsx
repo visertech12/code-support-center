@@ -19,19 +19,16 @@ const SEO: React.FC<SEOProps> = ({
   description,
   keywords,
   image = '/crypto-qr-preview.png',
-  url = 'https://cryptoqr.app',
+  url = 'https://wallet2qr.com',
   type = 'website',
-  author,
+  author = 'Wallet2QR Team',
   twitterCard = 'summary_large_image',
 }) => {
-  // Get site settings from context
   const { settings } = useSiteSettings();
   
-  // Use provided props or fallback to site settings
   const finalTitle = title || settings.metaTitle;
   const finalDescription = description || settings.metaDescription;
   const finalKeywords = keywords || settings.metaKeywords;
-  const finalAuthor = author || 'CryptoQR Team';
   
   const siteTitle = finalTitle.includes(settings.siteName) ? finalTitle : `${finalTitle} | ${settings.siteName}`;
 
@@ -41,7 +38,20 @@ const SEO: React.FC<SEOProps> = ({
       <title>{siteTitle}</title>
       <meta name="description" content={finalDescription} />
       <meta name="keywords" content={finalKeywords} />
-      <meta name="author" content={finalAuthor} />
+      <meta name="author" content={author} />
+
+      {/* Schema.org markup for Google */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": settings.siteName,
+          "description": finalDescription,
+          "url": url,
+          "applicationCategory": "UtilityApplication",
+          "operatingSystem": "Web Browser"
+        })}
+      </script>
 
       {/* Canonical URL */}
       <link rel="canonical" href={url} />
@@ -63,6 +73,10 @@ const SEO: React.FC<SEOProps> = ({
       {/* Additional mobile metadata */}
       <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       <meta name="theme-color" content="#9b87f5" />
+
+      {/* Additional SEO tags */}
+      <meta name="robots" content="index, follow" />
+      <meta name="googlebot" content="index, follow" />
     </Helmet>
   );
 };

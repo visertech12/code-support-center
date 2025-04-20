@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 interface SiteSettings {
@@ -9,10 +8,10 @@ interface SiteSettings {
 }
 
 const defaultSettings: SiteSettings = {
-  siteName: 'CryptoQR',
-  metaTitle: 'CryptoQR - Generate Cryptocurrency QR Codes',
-  metaDescription: 'Generate QR codes for multiple cryptocurrencies across various networks. Fast, secure, and easy to use.',
-  metaKeywords: 'crypto, cryptocurrency, qr code, bitcoin, ethereum, blockchain, wallet address',
+  siteName: 'Wallet2QR',
+  metaTitle: 'Wallet2QR | Tether (USDT) QR Code Generator for Secure Transactions',
+  metaDescription: 'Convert USDT to QR codes effortlessly with our user-friendly generator. Simplify your crypto transactions and enhance your payment experience now.',
+  metaKeywords: 'usdt to qr generator, usdt qr code generator, qr to usdt, btc to qr code generator, usdt qr code, btc to qr code, usdt trc20 qr code generator, ethereum qr code, eth qr code generator, crypto qr code, wallet qr code',
 };
 
 interface SiteSettingsContextType {
