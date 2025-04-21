@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,6 +24,9 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
+import UsdtValidatorPage from "./pages/UsdtValidatorPage";
+import UsdtConverterPage from "./pages/UsdtConverterPage";
+import RandomCoinGeneratorPage from "./pages/RandomCoinGeneratorPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,9 @@ const App = () => {
                         <Route path="/services" element={<ServicesPage />} />
                         <Route path="/contact" element={<ContactPage />} />
                         <Route path="/why" element={<WhyPage />} />
+                        <Route path="/usdt-validator" element={<UsdtValidatorPage />} />
+                        <Route path="/usdt-converter" element={<UsdtConverterPage />} />
+                        <Route path="/random-coin" element={<RandomCoinGeneratorPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Route>
                       <Route path="/admin" element={<AdminLoginPage />} />

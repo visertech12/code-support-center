@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -33,7 +32,7 @@ const Navbar = () => {
           </button>
           <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
             <QrCode className="h-6 w-6 text-crypto-lightPurple" />
-            <span className="font-bold text-xl">CryptoQR</span>
+            <span className="font-bold text-xl">Wallet2QR</span>
           </Link>
 
           {!isMobile && (

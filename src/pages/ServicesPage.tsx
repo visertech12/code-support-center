@@ -1,20 +1,19 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, QrCode, Shield, Zap, Smartphone, Network } from 'lucide-react';
+import { ArrowRight, QrCode, Shield, Zap, Smartphone, Network, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
+import { FileSearch, FileText } from 'lucide-react';
 
 const ServicesPage = () => {
   return (
     <div>
       <SEO 
-        title="CryptoQR Services | Advanced Cryptocurrency QR Code Solutions"
+        title="Wallet2QR Services | Advanced Cryptocurrency QR Code Solutions"
         description="Explore our premium cryptocurrency QR code services for businesses and individuals. Secure, customizable, and versatile solutions."
         keywords="crypto services, cryptocurrency QR, business crypto solutions, crypto wallet QR"
       />
       
-      {/* Header - Made more responsive */}
       <section className="bg-muted/40 py-8 sm:py-12">
         <div className="container px-4 sm:px-6">
           <div className="max-w-2xl">
@@ -26,7 +25,6 @@ const ServicesPage = () => {
         </div>
       </section>
 
-      {/* Main Services Grid - Improved responsive layout */}
       <section className="py-10 sm:py-16">
         <div className="container px-4 sm:px-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -104,11 +102,55 @@ const ServicesPage = () => {
                 </Link>
               </Button>
             </div>
+
+            <div className="bg-background rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-crypto-lightPurple/20 rounded-full w-14 h-14 flex items-center justify-center mb-4">
+                <FileSearch className="h-7 w-7 text-crypto-lightPurple" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">USDT Address Validator</h3>
+              <p className="text-muted-foreground mb-4">
+                Instantly check and validate USDT addresses across supported networks.
+              </p>
+              <Button asChild variant="outline" size="sm" className="mt-2">
+                <Link to="/usdt-validator">
+                  Validate Now <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="bg-background rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-green-500/20 rounded-full w-14 h-14 flex items-center justify-center mb-4">
+                <FileText className="h-7 w-7 text-green-500" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">USDT Converter & Calculator</h3>
+              <p className="text-muted-foreground mb-4">
+                Convert between USDT and other currencies with real time rates, plus calculator feature.
+              </p>
+              <Button asChild variant="outline" size="sm" className="mt-2">
+                <Link to="/usdt-converter">
+                  Try Converter <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="bg-background rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-accent/20 rounded-full w-14 h-14 flex items-center justify-center mb-4">
+                <Shuffle className="h-7 w-7 text-accent" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Random Coin Generator</h3>
+              <p className="text-muted-foreground mb-4">
+                Discover a new crypto asset at random using live data from CoinGecko.
+              </p>
+              <Button asChild variant="outline" size="sm" className="mt-2">
+                <Link to="/random-coin">
+                  Random Coin <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section - Made responsive */}
       <section className="py-12 sm:py-16 bg-gradient-to-r from-crypto-lightPurple/10 to-crypto-purple/10">
         <div className="container px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center">
