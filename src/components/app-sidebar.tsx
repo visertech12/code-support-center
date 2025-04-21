@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Coins, Network, Settings, Info, Mail, FileText, HelpCircle, QrCode, FileSearch, Shuffle } from 'lucide-react';
@@ -19,9 +18,6 @@ const links: SidebarLink[] = [
   { to: '/networks', icon: Network, label: 'Networks' },
   { to: '/services', icon: Settings, label: 'Services' },
   { to: '/verify', icon: FileSearch, label: 'Blockchain Transaction Verifier' },
-  { to: '/usdt-validator', icon: FileSearch, label: 'USDT Address Validator' },
-  // REMOVED: { to: '/usdt-converter', icon: FileText, label: 'USDT Converter & Calculator' },
-  // REMOVED: { to: '/random-coin', icon: Shuffle, label: 'Random Coin Generator' },
   { to: '/why', icon: HelpCircle, label: 'Why Wallet2QR' },
   { to: '/about', icon: Info, label: 'About' },
   { to: '/contact', icon: Mail, label: 'Contact' },
