@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Coins, Network, Settings, Info, Mail, FileText, HelpCircle, QrCode, FileSearch, Shuffle } from 'lucide-react';
+import { Home, Coins, Network, Settings, Info, Mail, FileText, HelpCircle, QrCode } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -17,9 +18,7 @@ const links: SidebarLink[] = [
   { to: '/coins', icon: Coins, label: 'Coins' },
   { to: '/networks', icon: Network, label: 'Networks' },
   { to: '/services', icon: Settings, label: 'Services' },
-  { to: '/verify', icon: FileSearch, label: 'Blockchain Transaction Verifier' },
-  { to: '/usdt-validator', icon: FileSearch, label: 'USDT Address Validator' },
-  { to: '/why', icon: HelpCircle, label: 'Why Wallet2QR' },
+  { to: '/why', icon: HelpCircle, label: 'Why CryptoQR' },
   { to: '/about', icon: Info, label: 'About' },
   { to: '/contact', icon: Mail, label: 'Contact' },
   { to: '/terms', icon: FileText, label: 'Legal' },
@@ -30,6 +29,7 @@ export function AppSidebar() {
   const location = useLocation();
   const isMobile = useIsMobile();
 
+  // Use Sheet for mobile, regular sidebar for desktop
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={setOpen}>
@@ -59,12 +59,12 @@ function SidebarContent() {
     <div className="p-4">
       <div className="flex items-center space-x-2 px-4 py-3">
         <QrCode className="h-6 w-6 text-crypto-lightPurple" />
-        <span className="text-xl font-bold text-white">Wallet2QR</span>
+        <span className="text-xl font-bold text-white">CryptoQR</span>
       </div>
       
       <nav className="space-y-1 mt-6">
         {links.map((link) => {
-          const isActive = location.pathname === link.to ||
+          const isActive = location.pathname === link.to || 
                         (link.to !== '/' && location.pathname.startsWith(link.to));
           
           return (
