@@ -56,7 +56,7 @@ const App = () => {
                         <Route path="/services" element={<ServicesPage />} />
                         <Route path="/contact" element={<ContactPage />} />
                         <Route path="/why" element={<WhyPage />} />
-                        {/* REMOVED: <Route path="/usdt-validator" element={<UsdtValidatorPage />} /> */}
+                        <Route path="/usdt-validator" element={<UsdtValidatorPage />} />
                         {/* REMOVED: <Route path="/usdt-converter" element={<UsdtConverterPage />} /> */}
                         {/* REMOVED: <Route path="/random-coin" element={<RandomCoinGeneratorPage />} /> */}
                         <Route path="*" element={<NotFound />} />
