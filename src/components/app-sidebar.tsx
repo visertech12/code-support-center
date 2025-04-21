@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Coins, Network, Settings, Info, Mail, FileText, HelpCircle, QrCode } from 'lucide-react';
+import { Home, Coins, Network, Settings, Info, Mail, FileText, HelpCircle, QrCode, FileSearch } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -18,6 +18,7 @@ const links: SidebarLink[] = [
   { to: '/coins', icon: Coins, label: 'Coins' },
   { to: '/networks', icon: Network, label: 'Networks' },
   { to: '/services', icon: Settings, label: 'Services' },
+  { to: '/verify', icon: FileSearch, label: 'Blockchain Transaction Verifier' }, // New option
   { to: '/why', icon: HelpCircle, label: 'Why CryptoQR' },
   { to: '/about', icon: Info, label: 'About' },
   { to: '/contact', icon: Mail, label: 'Contact' },
