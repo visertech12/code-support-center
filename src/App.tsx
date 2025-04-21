@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,8 +26,8 @@ import { SidebarProvider } from "./components/ui/sidebar";
 import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import UsdtValidatorPage from "./pages/UsdtValidatorPage";
-import UsdtConverterPage from "./pages/UsdtConverterPage";
-import RandomCoinGeneratorPage from "./pages/RandomCoinGeneratorPage";
+// REMOVED: import UsdtConverterPage from "./pages/UsdtConverterPage";
+// REMOVED: import RandomCoinGeneratorPage from "./pages/RandomCoinGeneratorPage";
 
 const queryClient = new QueryClient();
 
@@ -57,8 +58,8 @@ const App = () => {
                         <Route path="/contact" element={<ContactPage />} />
                         <Route path="/why" element={<WhyPage />} />
                         <Route path="/usdt-validator" element={<UsdtValidatorPage />} />
-                        <Route path="/usdt-converter" element={<UsdtConverterPage />} />
-                        <Route path="/random-coin" element={<RandomCoinGeneratorPage />} />
+                        {/* REMOVED: <Route path="/usdt-converter" element={<UsdtConverterPage />} /> */}
+                        {/* REMOVED: <Route path="/random-coin" element={<RandomCoinGeneratorPage />} /> */}
                         <Route path="*" element={<NotFound />} />
                       </Route>
                       <Route path="/admin" element={<AdminLoginPage />} />
